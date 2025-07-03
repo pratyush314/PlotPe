@@ -21,10 +21,20 @@ const Header = () => {
               <FaSearch className="text-slate-600" />
             </button>
           </form>
-          <ul>
-            <li>Home</li>
-            <li>About</li>
-            <li>Sign In</li>
+          <ul className="flex gap-4">
+            <Link to={"/"}>
+              <li className="hidden sm:inline text-slate-700 hover:underline">
+                Home
+              </li>
+            </Link>
+            <Link to={"/about"}>
+              <li className="hidden sm:inline text-slate-700 hover:underline">
+                About
+              </li>
+            </Link>
+            <Link className="text-slate-700 hover:underline" to={"/sign-in"}>
+              <li>Sign In</li>
+            </Link>
           </ul>
         </div>
       </header>
