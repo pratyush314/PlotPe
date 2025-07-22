@@ -1,8 +1,9 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Oauth from "../components/Oauth";
 import { useState } from "react";
 
 const SignUp = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     username: "",
     email: "",
@@ -11,9 +12,11 @@ const SignUp = () => {
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
-
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
       const res = await fetch(
         "https://plotpe-mern-project.onrender.com/api/auth/signup",
@@ -27,9 +30,15 @@ const SignUp = () => {
         throw new Error(res.statusText);
       }
       const data = await res.json();
-      console.log(data);
+      if (!data?.success) {
+        setError(data.message);
+      } else {
+        navigate("/sign-in");
+      }
     } catch (error) {
       console.log(error);
+    } finally {
+      setLoading(false);
     }
   };
   return (
@@ -60,8 +69,11 @@ const SignUp = () => {
           onChange={handleChange}
           placeholder="password"
         />
-        <button className="uppercase bg-slate-700 text-white p-3 rounded-lg hover:opacity-95 disabled:opacity-80">
-          Sign In
+        <button
+          disabled={loading}
+          className="uppercase bg-slate-700 text-white p-3 rounded-lg hover:opacity-95 disabled:opacity-80"
+        >
+          {loading ? "Signing up..." : "Sign Up"}
         </button>
         <Oauth />
       </form>
@@ -71,6 +83,7 @@ const SignUp = () => {
           <span className="text-blue-700">Sign In</span>
         </Link>
       </div>
+      {error && <p className="text-red-500 mt-5">{error}</p>}
     </div>
   );
 };
