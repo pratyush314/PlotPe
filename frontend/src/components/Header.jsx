@@ -3,7 +3,6 @@ import { FaSearch } from "react-icons/fa";
 import { useSelector } from "react-redux";
 const Header = () => {
   const { currentUser } = useSelector((state) => state.user);
-  console.log(currentUser);
   return (
     <div>
       <header className="bg-slate-200 shadow-md">

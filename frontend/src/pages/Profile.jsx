@@ -12,7 +12,14 @@ import {
   updateUserFailure,
   updateUserStart,
   updateUserSuccess,
+  deleteUserFailure,
+  deleteUserStart,
+  deleteUserSuccess,
+  signOutUserStart,
+  signOutUserFailure,
+  signOutUserSuccess,
 } from "../features/user/userSlice";
+import { Link } from "react-router-dom";
 const Profile = () => {
   const dispatch = useDispatch();
   const { currentUser, error, loading } = useSelector((state) => state.user);
@@ -30,7 +37,7 @@ const Profile = () => {
     try {
       dispatch(updateUserStart());
       const res = await fetch(
-        `https://plotpe-mern-project.onrender.com/api/user/update/${currentUser.id}`,
+        `https://plotpe-mern-project.onrender.com/api/user/update/${currentUser._id}`,
         {
           method: "POST",
           headers: {
@@ -49,6 +56,7 @@ const Profile = () => {
       setUpdateSuccess(true);
     } catch (error) {
       console.log(error);
+      dispatch(updateUserFailure(error.message));
     }
   };
   const handleFileUpload = (file) => {
@@ -77,6 +85,49 @@ const Profile = () => {
       );
     } catch (error) {
       console.log(error);
+    }
+  };
+
+  const handleDeleteUser = async () => {
+    try {
+      dispatch(deleteUserStart());
+      const res = await fetch(
+        `https://plotpe-mern-project.onrender.com/api/user/delete/${currentUser._id}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        }
+      );
+      const data = await res.json();
+      if (!data.success) {
+        dispatch(deleteUserFailure(data.message));
+        return;
+      }
+      dispatch(deleteUserSuccess());
+    } catch (error) {
+      console.log(error);
+      dispatch(deleteUserFailure(error.message));
+    }
+  };
+
+  const handleSignOutUser = async () => {
+    try {
+      dispatch(signOutUserStart());
+      const res = await fetch(
+        `https://plotpe-mern-project.onrender.com/api/user/signout`,
+        {
+          credentials: "include",
+        }
+      );
+      const data = await res.json();
+      if (!data.success) {
+        dispatch(signOutUserFailure(data.message));
+        return;
+      }
+      dispatch(signOutUserSuccess());
+    } catch (error) {
+      console.log(error);
+      dispatch(signOutUserFailure(error.message));
     }
   };
   useEffect(() => {
@@ -143,10 +194,26 @@ const Profile = () => {
         >
           {loading ? "Loading ..." : "Update"}
         </button>
+        <Link
+          to="/create-listing"
+          className="bg-green-700 text-white p-3 rounded-lg uppercase text-center hover:opacity-95"
+        >
+          Create Listing
+        </Link>
       </form>
       <div className="flex justify-between mt-5">
-        <span className="text-red-700 cursor-pointer">Delete Account</span>
-        <span className="text-red-700 cursor-pointer">Sign Out</span>
+        <span
+          onClick={handleDeleteUser}
+          className="text-red-700 cursor-pointer"
+        >
+          Delete Account
+        </span>
+        <span
+          onClick={handleSignOutUser}
+          className="text-red-700 cursor-pointer"
+        >
+          Sign Out
+        </span>
       </div>
       <p className="text-red-700">{error ? error : ""}</p>
       <p className="text-green-700">
