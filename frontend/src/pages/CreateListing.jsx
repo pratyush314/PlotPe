@@ -6,9 +6,15 @@ import {
 } from "firebase/storage";
 import { useState } from "react";
 import { app } from "../firebase";
+import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 
 const CreateListing = () => {
   const [files, setFiles] = useState([]);
+  const navigate = useNavigate();
+  const { currentUser } = useSelector((state) => state.user);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
     imageUrls: [],
     name: "",
@@ -18,7 +24,7 @@ const CreateListing = () => {
     bedrooms: 1,
     bathrooms: 1,
     regularPrice: 0,
-    discountedPrice: 0,
+    discountPrice: 0,
     offer: false,
     parking: false,
     furnished: false,
@@ -82,14 +88,63 @@ const CreateListing = () => {
     });
   };
   const handleChange = (e) => {
-    console.log(e.target);
+    const { id, type, value, checked } = e.target;
+    if (id === "rent" || id === "sale") {
+      setFormData({
+        ...formData,
+        type: id,
+      });
+      return;
+    }
+    setFormData({
+      ...formData,
+      [id]: type === "checkbox" ? checked : value,
+    });
+  };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (formData.imageUrls.length === 0) {
+      setError("You must upload at least 1 image");
+      return;
+    }
+    if (+formData.regularPrice < +formData.discountPrice) {
+      setError("Discounted price must be less then regular price");
+      return;
+    }
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await fetch(
+        `https://plotpe-mern-project.onrender.com/api/listing/create`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ ...formData, userRef: currentUser._id }),
+          credentials: "include",
+        }
+      );
+      const data = await response.json();
+      console.log(data);
+      if (!data.success) {
+        setError(data.message);
+        return;
+      }
+      navigate(`/listing/${data._id}`);
+    } catch (error) {
+      console.log(error);
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
   };
   return (
     <main className="p-3 max-w-4xl mx-auto">
       <h1 className="text-3xl font-semibold text-center my-7">
         Create Listing
       </h1>
-      <form className="flex flex-col md:flex-row gap-6">
+      <form onSubmit={handleSubmit} className="flex flex-col md:flex-row gap-6">
         {/* First Section */}
         <div className="flex-1 flex flex-col gap-4">
           <input
@@ -98,7 +153,7 @@ const CreateListing = () => {
             value={formData.name}
             onChange={handleChange}
             placeholder="Name"
-            minLength={10}
+            minLength={5}
             maxLength={62}
             required
             className="border border-slate-200 p-3 rounded-lg w-full bg-white"
@@ -143,7 +198,7 @@ const CreateListing = () => {
             </div>
             <div className="flex gap-2">
               <input
-                checked={formData.type === "parking"}
+                checked={formData.parking}
                 onChange={handleChange}
                 className="w-5"
                 type="checkbox"
@@ -153,7 +208,7 @@ const CreateListing = () => {
             </div>
             <div className="flex gap-2">
               <input
-                checked={formData.type === "furnished"}
+                checked={formData.furnished}
                 onChange={handleChange}
                 className="w-5"
                 type="checkbox"
@@ -162,7 +217,13 @@ const CreateListing = () => {
               <span>Furnished</span>
             </div>
             <div className="flex gap-2">
-              <input className="w-5" type="checkbox" id="offer" />
+              <input
+                className="w-5"
+                type="checkbox"
+                id="offer"
+                onChange={handleChange}
+                checked={formData.offer}
+              />
               <span>Offer</span>
             </div>
           </div>
@@ -172,6 +233,8 @@ const CreateListing = () => {
                 className="p-3 border border-gray-300 rounded-lg bg-white"
                 type="number"
                 id="bedrooms"
+                value={formData.bedrooms}
+                onChange={handleChange}
                 min={1}
                 max={10}
                 required
@@ -183,6 +246,8 @@ const CreateListing = () => {
                 className="p-3 border border-gray-300 rounded-lg bg-white"
                 type="number"
                 id="bathrooms"
+                value={formData.bathrooms}
+                onChange={handleChange}
                 min={1}
                 max={10}
                 required
@@ -194,6 +259,8 @@ const CreateListing = () => {
                 className="p-3 border border-gray-300 rounded-lg bg-white"
                 type="number"
                 id="regularPrice"
+                value={formData.regularPrice}
+                onChange={handleChange}
                 min={0}
                 max={1000000}
                 required
@@ -207,8 +274,10 @@ const CreateListing = () => {
               <input
                 className="p-3 border border-gray-300 rounded-lg bg-white"
                 type="number"
-                id="discountedPrice"
+                id="discountPrice"
                 min={0}
+                value={formData.discountPrice}
+                onChange={handleChange}
                 max={1000000}
                 required
               />
@@ -268,12 +337,13 @@ const CreateListing = () => {
               </div>
             ))}
           <button
-            className="p-3 bg-slate-700 text-white rounded-lg uppercase hover:opacity-95"
+            disabled={loading || uploading}
+            className="p-3 cursor-pointer bg-slate-700 text-white rounded-lg uppercase hover:opacity-95"
             type="submit"
           >
-            Create Listing
+            {loading ? "Creating ..." : "Create Listing"}
           </button>
-          <p>Error Message Here</p>
+          {error && <p>error</p>}
         </div>
       </form>
     </main>
