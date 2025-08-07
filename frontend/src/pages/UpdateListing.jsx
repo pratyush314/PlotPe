@@ -127,9 +127,8 @@ const UpdateListing = () => {
         }
       );
       const data = await response.json();
-      console.log(data);
-      if (!data.success) {
-        setError(data.message);
+      if (!data) {
+        setError("No data found !");
         return;
       }
       navigate(`/listing/${data._id}`);
@@ -151,7 +150,7 @@ const UpdateListing = () => {
           }
         );
         const data = await res.json();
-        if (!data.success) {
+        if (!data) {
           return;
         }
         setFormData(data);
